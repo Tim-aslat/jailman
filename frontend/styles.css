@@ -1,0 +1,42 @@
+body {
+  font-family: sans-serif;
+  background: #f0f0f0;
+  padding: 2em;
+}
+
+h2 {
+  color: #333;
+}
+
+table {
+  border-collapse: collapse;
+  width: 100%;
+  margin-bottom: 1em;
+}
+
+th, td {
+  padding: 0.05em;
+  border: 1px solid #ccc;
+  text-align: left;
+}
+
+th {
+  background-color: #e0e0e0;
+}
+
+tr:nth-child(even) {
+  background-color: #f9f9f9;
+}
+
+button {
+  padding: 0.25em 0.25em;
+  font-size: 1em;
+  margin-right: 1em;
+}
+
+#output {
+  white-space: pre-wrap;
+  background: #eee;
+  padding: 0.25em;
+  border-radius: 4px;
+}
