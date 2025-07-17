@@ -39,5 +39,25 @@ TODO
 ## Examples
 
 ```sh
-curl -k -H "X-API-Key:AReallyLongComplicatedSecretKey12345" "http://localhost:9191/restart?jail=jailname"
+The following example is to test the API
+
+List all jails
+curl -k -H "X-API-Key:AReallyLongComplicatedSecretKey12345" "http://localhost:9191/list_jails"
+
+Restart jail - testjail
+curl -k -H "X-API-Key:AReallyLongComplicatedSecretKey12345" "http://localhost:9191/restart?jail=testjail"
+
 ```
+
+
+## Contributing
+
+PRs welcome! Fork the repo and submit a pull request.
+If you find bugs, file an issue. Be nice and descriptive.
+
+## License
+
+MIT License (or whatever you use).
+See `LICENSE` file for full text.
+
+
