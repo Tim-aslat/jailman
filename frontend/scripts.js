@@ -1,3 +1,4 @@
+
 async function loadJails() {
   const tableBody = document.querySelector("#jail-table tbody");
   tableBody.innerHTML = '';

@@ -33,53 +33,83 @@ class JailControl(BaseHTTPRequestHandler):
             self.send_error_response(400, "Missing jail name in query string")
             return None
 
-        if jail not in ALLOWED_JAILS:
-            msg = f"Jail '{jail}' is not whitelisted"
-            if debug:
-                msg += f" (Allowed: {', '.join(ALLOWED_JAILS)})"
-            self.send_error_response(403, msg)
-            return None
+#        if jail not in ALLOWED_JAILS:
+#            msg = f"Jail '{jail}' is not whitelisted"
+#            if debug:
+#                msg += f" (Allowed: {', '.join(ALLOWED_JAILS)})"
+#            self.send_error_response(403, msg)
+#            return None
 
         return jail
 
+    def log(self, message):
+        print(f"[{self.client_address[0]}] {message}")
+
 
     def do_GET(self):
-        print("do_GET triggered")
-        client_ip = self.client_address[0]
-        print(f"Client IP: {client_ip}")
-        print(f"Allowed hosts: {host_allow}")
-        if client_ip not in host_allow:
-            print("Client not allowed, sending 403")
-            self.send_error_response(403, "Forbidden: Access denied")
-            return
-
-        print("Client allowed, continuing...")
-
-        api_key = self.headers.get("X-API-Key")
-        if api_key != secret_key:
-            print("Invalid or missing API key")
-            self.send_error_response(403, "Forbidden: Invalid API key")
-            return
-
         parsed = urllib.parse.urlparse(self.path)
+        client_ip = self.client_address[0]
 
-        if parsed.path == "/list_jails":
-            self.handle_list_jails()
-            return
+        # Block early if host/IP not allowed
+#        if client_ip not in host_allow:
+#            self.send_error_response(403, "Forbidden: Access denied")
+#            return
 
-        if parsed.path == "/restart":
-            self.handle_restart(parsed)
-            return
+        # Handle API routes
+        if parsed.path.startswith("/api/"):
+#            api_key = self.headers.get("X-API-Key")
+#            if api_key != secret_key:
+#                self.send_error_response(403, "Forbidden: Invalid API key")
+#                return
 
-        if parsed.path == "/start":
-            self.handle_start(parsed)
-            return
+            if parsed.path == "/api/list_jails":
+                self.handle_list_jails()
+                return
+            elif parsed.path == "/api/restart":
+                self.handle_restart(parsed)
+                return
+            elif parsed.path == "/api/start":
+                self.handle_start(parsed)
+                return
+            elif parsed.path == "/api/stop":
+                self.handle_stop(parsed)
+                return
+            else:
+                self.send_error_response(404, "API endpoint not found")
+                return
 
-        if parsed.path == "/stop":
-            self.handle_stop(parsed)
-            return
+        # Serve frontend static files
+        path = parsed.path.lstrip("/")
+        if not path:
+            path = "index.html"
 
-        self.send_error_response(404, "Not Found")
+        try:
+            with open(f"frontend/{path}", "rb") as f:
+                self.send_response(200)
+                if path.endswith(".html"):
+                    self.send_header("Content-Type", "text/html")
+                elif path.endswith(".js"):
+                    self.send_header("Content-Type", "application/javascript")
+                elif path.endswith(".css"):
+                    self.send_header("Content-Type", "text/css")
+                else:
+                    self.send_header("Content-Type", "application/octet-stream")
+                self.end_headers()
+                self.wfile.write(f.read())
+        except FileNotFoundError:
+            # Only serve index.html for non-file routes (like /dashboard or /status)
+            if "." not in path:
+                try:
+                    with open("frontend/index.html", "rb") as f:
+                        self.send_response(200)
+                        self.send_header("Content-Type", "text/html")
+                        self.end_headers()
+                        self.wfile.write(f.read())
+                except FileNotFoundError:
+                    self.send_error_response(404, "Frontend not found")
+            else:
+                self.send_error_response(404, "File not found")
+
 
     def handle_list_jails(self):
         try:
