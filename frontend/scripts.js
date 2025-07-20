@@ -1,28 +1,39 @@
-document.addEventListener('DOMContentLoaded', () => {
-  document.getElementById('editForm').onsubmit = async (e) => {
-    e.preventDefault();
-    const data = {
-      boot: document.getElementById('bootOpt').checked,
-      priority: parseInt(document.getElementById('priorityOpt').value)
-    };
+// let selectedJail = null;
 
-    await fetch('/api/jails/jailname/config', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(data)
-    });
-
-    closeModal();
-  };
-});
-
-function openModal(jailname) {
-  // Optionally fetch current config via API using jailname
-  document.getElementById('editModal').classList.remove('hidden');
+function openPriorityModal(jailName, currentPriority) {
+  selectedJail = jailName;
+  document.getElementById("priorityModalTitle").textContent = `Set Priority for ${jailName}`;
+  document.getElementById("priorityInput").value = currentPriority;
+  document.getElementById("priorityModal").style.display = "flex";
 }
 
-function closeModal() {
-  document.getElementById('editModal').classList.add('hidden');
+function closePriorityModal() {
+  document.getElementById("priorityModal").style.display = "none";
+  selectedJail = null;
+}
+
+async function confirmPriority() {
+  const priorityValue = document.getElementById("priorityInput").value;
+  const output = document.getElementById("output");
+
+  const num = parseInt(priorityValue, 10);
+  if (isNaN(num) || num < 0 || num > 99) {
+    alert("Invalid priority. Must be 0–99.");
+    return;
+  }
+
+  output.textContent = `Setting priority on ${selectedJail} to ${num}...`;
+
+  try {
+    const res = await fetch(`/api/set_priority?jail=${encodeURIComponent(selectedJail)}&priority=${num}`);
+    const text = await res.text();
+    output.textContent = `Output from ${selectedJail}:\n\n${text}`;
+    await loadJails();
+  } catch (err) {
+    output.textContent = `Failed to set priority: ${err}`;
+  }
+
+  closePriorityModal();
 }
 
 async function loadJails() {
@@ -51,7 +62,10 @@ async function loadJails() {
         <button onclick="restartJail('${jail.Name}')">Restart</button>
         <button onclick="startJail('${jail.Name}')">Start</button>
         <button onclick="stopJail('${jail.Name}')">Stop</button>
-        <button onclick="openModal('jailname')">Edit</button>
+        <button onclick="toggleBoot('${jail.Name}', '${jail.Boot}')">Toggle Boot</button>
+        <button onclick="openPriorityModal('${jail.Name}', '${jail.Priority}')">Set Priority</button>
+<!--        <button onclick="setPriority('${jail.Name}', '${jail.Priority}')">Set Priority</button>
+        <button onclick="openModal('jailname')">Edit</button> -->
         </td>
       `;
 
@@ -102,6 +116,45 @@ async function stopJail(jail) {
     await loadJails();  // reload status in case state changes
   } catch (err) {
     output.textContent = `Failed to stop jail: ${err}`;
+  }
+}
+
+async function toggleBoot(jail, bootState) {
+  const output = document.getElementById("output");
+  output.textContent = `Toggling Boot setting on ${jail}...`;
+
+  try {
+    let boot = (bootState === 'on') ? 'off' : 'on';
+    const res = await fetch(`/api/set_boot?jail=${encodeURIComponent(jail)}&boot=${boot}`);
+    const text = await res.text();
+    output.textContent = `Output from ${jail}:\n\n${text}`;
+    await loadJails();  // reload status in case state changes
+  } catch (err) {
+    output.textContent = `Failed to stop jail: ${err}`;
+  }
+}
+
+async function setPriority(jailName, currentPriority) {
+  const newPriority = prompt(`Current priority for ${jailName} is ${currentPriority}. Enter new priority (0-99):`, currentPriority);
+
+  if (newPriority === null) return;  // user cancelled
+  const num = parseInt(newPriority, 10);
+
+  if (isNaN(num) || num < 0 || num > 99) {
+    alert("Invalid priority. Must be a number between 0 and 99.");
+    return;
+  }
+
+  const output = document.getElementById("output");
+  output.textContent = `Setting priority on ${jailName} to ${num}...`;
+
+  try {
+    const res = await fetch(`/api/set_priority?jail=${encodeURIComponent(jailName)}&priority=${num}`);
+    const text = await res.text();
+    output.textContent = `Output from ${jailName}:\n\n${text}`;
+    await loadJails();  // refresh to show updated value
+  } catch (err) {
+    output.textContent = `Failed to set priority: ${err}`;
   }
 }
 

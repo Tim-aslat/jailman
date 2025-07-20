@@ -25,21 +25,11 @@ ALLOWED_JAILS = {"shell", "utils"}  # whitelist for safety
 
 class JailControl(BaseHTTPRequestHandler):
 
-    def get_validated_jail(self, parsed):
-        query = urllib.parse.parse_qs(parsed.query)
-        jail = query.get("jail", [None])[0]
-
+    def get_validated_jail(self, params):
+        jail = params.get("jail")
         if not jail:
             self.send_error_response(400, "Missing jail name in query string")
             return None
-
-#        if jail not in ALLOWED_JAILS:
-#            msg = f"Jail '{jail}' is not whitelisted"
-#            if debug:
-#                msg += f" (Allowed: {', '.join(ALLOWED_JAILS)})"
-#            self.send_error_response(403, msg)
-#            return None
-
         return jail
 
     def log(self, message):
@@ -50,35 +40,32 @@ class JailControl(BaseHTTPRequestHandler):
         parsed = urllib.parse.urlparse(self.path)
         client_ip = self.client_address[0]
 
-        # Block early if host/IP not allowed
-#        if client_ip not in host_allow:
-#            self.send_error_response(403, "Forbidden: Access denied")
-#            return
+        # Parse query params
+        query = urllib.parse.parse_qs(parsed.query)
+        parsed_params = {k: v[0] for k, v in query.items()}
 
         # Handle API routes
         if parsed.path.startswith("/api/"):
-#            api_key = self.headers.get("X-API-Key")
-#            if api_key != secret_key:
-#                self.send_error_response(403, "Forbidden: Invalid API key")
-#                return
-
             if parsed.path == "/api/list_jails":
                 self.handle_list_jails()
                 return
             elif parsed.path == "/api/restart":
-                self.handle_restart(parsed)
+                self.handle_restart(parsed_params)
                 return
             elif parsed.path == "/api/start":
-                self.handle_start(parsed)
+                self.handle_start(parsed_params)
                 return
             elif parsed.path == "/api/stop":
-                self.handle_stop(parsed)
+                self.handle_stop(parsed_params)
                 return
-            elif parsed.path == "/api/boot":
-                self.handle_boot(parsed)
+            elif parsed.path == "/api/snapshot":
+                self.handle_snapshot(parsed_params)
                 return
-            elif parsed.path == "/api/priority":
-                self.handle_priority(parsed)
+            elif parsed.path == "/api/set_boot":
+                self.handle_boot_toggle(parsed_params)
+                return
+            elif parsed.path == "/api/set_priority":
+                self.handle_priority_set(parsed_params)
                 return
             else:
                 self.send_error_response(404, "API endpoint not found")
@@ -190,14 +177,16 @@ class JailControl(BaseHTTPRequestHandler):
             print(f"Output: {e.output}")
             self.send_text_response(500, e.output)
 
-    def handle_priority(self, parsed):
+    def handle_snapshot(self, parsed):
         jail = self.get_validated_jail(parsed)
-        if not jail:
+        snapshot = parsed.get("snapshot")
+        if not jail or not snapshot:
+            self.send_text_response(400, "Missing jail or snapshot name")
             return
 
         try:
             result = subprocess.run(
-                ["/usr/local/bin/bastille", "config", jail],
+                ["/usr/local/bin/bastille", "zfs", jail, "snapshot", snapshot],
                 stdout=subprocess.PIPE,
                 stderr=subprocess.STDOUT,
                 check=True,
@@ -205,19 +194,19 @@ class JailControl(BaseHTTPRequestHandler):
             )
             self.send_text_response(200, result.stdout)
         except subprocess.CalledProcessError as e:
-            print(f"Command failed: {e.cmd}")
-            print(f"Return code: {e.returncode}")
-            print(f"Output: {e.output}")
+            print(f"Snapshot command failed: {e.cmd}")
             self.send_text_response(500, e.output)
 
-    def handle_boot(self, parsed):
+    def handle_boot_toggle(self, parsed):
         jail = self.get_validated_jail(parsed)
-        if not jail:
+        state = parsed.get("boot")
+        if not jail or state not in ("on", "off"):
+            self.send_text_response(400, "Missing jail or invalid boot state (must be 'on' or 'off')")
             return
 
         try:
             result = subprocess.run(
-                ["/usr/local/bin/bastille", "config", jail, "set boot", boot],
+                ["/usr/local/bin/bastille", "config", jail, "set", "boot", state],
                 stdout=subprocess.PIPE,
                 stderr=subprocess.STDOUT,
                 check=True,
@@ -225,10 +214,29 @@ class JailControl(BaseHTTPRequestHandler):
             )
             self.send_text_response(200, result.stdout)
         except subprocess.CalledProcessError as e:
-            print(f"Command failed: {e.cmd}")
-            print(f"Return code: {e.returncode}")
-            print(f"Output: {e.output}")
+            print(f"Boot toggle failed: {e.cmd}")
             self.send_text_response(500, e.output)
+
+    def handle_priority_set(self, parsed):
+        jail = self.get_validated_jail(parsed)
+        priority = parsed.get("priority")
+        if not jail or not priority or not priority.isdigit() or not 0 <= int(priority) <= 99:
+            self.send_text_response(400, "Missing jail or invalid priority (0-99)")
+            return
+
+        try:
+            result = subprocess.run(
+                ["/usr/local/bin/bastille", "config", jail, "set", "priority", str(priority)],
+                stdout=subprocess.PIPE,
+                stderr=subprocess.STDOUT,
+                check=True,
+                text=True,
+            )
+            self.send_text_response(200, result.stdout)
+        except subprocess.CalledProcessError as e:
+            print(f"Priority set failed: {e.cmd}")
+            self.send_text_response(500, e.output)
+
 
     # Helper to send JSON response
     def send_json_response(self, json_data, status=200):
