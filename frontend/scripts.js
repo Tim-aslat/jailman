@@ -63,20 +63,22 @@ async function loadJails() {
     jails.forEach(jail => {
       const row = document.createElement("tr");
 
+      const bootClass = (jail.Boot.toLowerCase() === 'on') ? 'btn-blue' : 'btn-red';
+
       row.innerHTML = `
         <td>${jail.Name}</td>
-        <td>${jail.Boot}</td>
-        <td>${jail.Prio}</td>
+        <td>
+        <button class="${bootClass}" title="Toggle whether this jail starts at boot" onclick="toggleBoot('${jail.Name}', '${jail.Boot}')">
+          ${jail.Boot}
+        </button>
+        </td>
+        <td><button title="Set the priority this jail has in boot order.  Lower number = higher priority" onclick="openPriorityModal('${jail.Name}', '${jail.Prio}')">${jail.Prio}</button></td>
         <td>${jail.State}</td>
         <td>${jail["IP Address"]}</td>
         <td>
         <button onclick="restartJail('${jail.Name}')">Restart</button>
         <button onclick="startJail('${jail.Name}')">Start</button>
         <button onclick="stopJail('${jail.Name}')">Stop</button>
-        <button onclick="toggleBoot('${jail.Name}', '${jail.Boot}')">Toggle Boot</button>
-        <button onclick="openPriorityModal('${jail.Name}', '${jail.Priority}')">Set Priority</button>
-<!--        <button onclick="setPriority('${jail.Name}', '${jail.Priority}')">Set Priority</button>
-        <button onclick="openModal('jailname')">Edit</button> -->
         </td>
       `;
 

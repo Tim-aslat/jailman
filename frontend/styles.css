@@ -51,6 +51,16 @@ button:hover {
   background-color: #005f99;
 }
 
+.btn-blue {
+  background-color: #007ACC;
+  color: white;
+}
+
+.btn-red {
+  background-color: #CC0000;
+  color: white;
+}
+
 h2 {
   color: #333;
 }
