@@ -74,6 +74,12 @@ class JailControl(BaseHTTPRequestHandler):
             elif parsed.path == "/api/stop":
                 self.handle_stop(parsed)
                 return
+            elif parsed.path == "/api/boot":
+                self.handle_boot(parsed)
+                return
+            elif parsed.path == "/api/priority":
+                self.handle_priority(parsed)
+                return
             else:
                 self.send_error_response(404, "API endpoint not found")
                 return
@@ -172,6 +178,46 @@ class JailControl(BaseHTTPRequestHandler):
         try:
             result = subprocess.run(
                 ["/usr/local/bin/bastille", "stop", jail],
+                stdout=subprocess.PIPE,
+                stderr=subprocess.STDOUT,
+                check=True,
+                text=True,
+            )
+            self.send_text_response(200, result.stdout)
+        except subprocess.CalledProcessError as e:
+            print(f"Command failed: {e.cmd}")
+            print(f"Return code: {e.returncode}")
+            print(f"Output: {e.output}")
+            self.send_text_response(500, e.output)
+
+    def handle_priority(self, parsed):
+        jail = self.get_validated_jail(parsed)
+        if not jail:
+            return
+
+        try:
+            result = subprocess.run(
+                ["/usr/local/bin/bastille", "config", jail],
+                stdout=subprocess.PIPE,
+                stderr=subprocess.STDOUT,
+                check=True,
+                text=True,
+            )
+            self.send_text_response(200, result.stdout)
+        except subprocess.CalledProcessError as e:
+            print(f"Command failed: {e.cmd}")
+            print(f"Return code: {e.returncode}")
+            print(f"Output: {e.output}")
+            self.send_text_response(500, e.output)
+
+    def handle_boot(self, parsed):
+        jail = self.get_validated_jail(parsed)
+        if not jail:
+            return
+
+        try:
+            result = subprocess.run(
+                ["/usr/local/bin/bastille", "config", jail, "set boot", boot],
                 stdout=subprocess.PIPE,
                 stderr=subprocess.STDOUT,
                 check=True,

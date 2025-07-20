@@ -1,3 +1,29 @@
+document.addEventListener('DOMContentLoaded', () => {
+  document.getElementById('editForm').onsubmit = async (e) => {
+    e.preventDefault();
+    const data = {
+      boot: document.getElementById('bootOpt').checked,
+      priority: parseInt(document.getElementById('priorityOpt').value)
+    };
+
+    await fetch('/api/jails/jailname/config', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data)
+    });
+
+    closeModal();
+  };
+});
+
+function openModal(jailname) {
+  // Optionally fetch current config via API using jailname
+  document.getElementById('editModal').classList.remove('hidden');
+}
+
+function closeModal() {
+  document.getElementById('editModal').classList.add('hidden');
+}
 
 async function loadJails() {
   const tableBody = document.querySelector("#jail-table tbody");
@@ -17,13 +43,15 @@ async function loadJails() {
 
       row.innerHTML = `
         <td>${jail.Name}</td>
-        <td>${jail.JID}</td>
+        <td>${jail.Boot}</td>
+        <td>${jail.Prio}</td>
         <td>${jail.State}</td>
         <td>${jail["IP Address"]}</td>
         <td>
         <button onclick="restartJail('${jail.Name}')">Restart</button>
         <button onclick="startJail('${jail.Name}')">Start</button>
         <button onclick="stopJail('${jail.Name}')">Stop</button>
+        <button onclick="openModal('jailname')">Edit</button>
         </td>
       `;
 
