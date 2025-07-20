@@ -66,7 +66,7 @@ If you find bugs, file an issue. Be nice and descriptive.
 
 ## License
 
-MIT License (or whatever you use).
+BSD 3 clause License
 See `LICENSE` file for full text.
 
 
