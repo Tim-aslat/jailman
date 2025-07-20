@@ -1,5 +1,16 @@
 // let selectedJail = null;
 
+function logout() {
+  fetch("/", {
+    headers: {
+      "Authorization": "Basic " + btoa("logout:logout")
+    }
+  }).then(() => {
+    alert("Logged out. You may need to close the tab or reload.");
+    window.location.reload();
+  });
+}
+
 function openPriorityModal(jailName, currentPriority) {
   selectedJail = jailName;
   document.getElementById("priorityModalTitle").textContent = `Set Priority for ${jailName}`;

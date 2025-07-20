@@ -5,6 +5,8 @@ import urllib.parse
 import subprocess
 import json
 import configparser
+import sys
+import base64
 
 config = configparser.ConfigParser()
 config.read('config.ini')
@@ -12,6 +14,11 @@ config.read('config.ini')
 debug = config.getboolean('jailman', 'debug', fallback=False)
 port = config.getint('jailman', 'port', fallback=8080)
 secret_key = config.get('jailman', 'secret_key', fallback='defaultsecret')
+
+auth_user = config.get('jailman', 'auth_user', fallback=None)
+auth_pass = config.get('jailman', 'auth_pass', fallback=None)
+
+print(f"Username: {auth_user}\nPassword: {auth_pass}")
 
 
 hosts_str = config.get('jailman', 'host_allow', fallback='127.0.0.1')
@@ -34,6 +41,7 @@ class JailControl(BaseHTTPRequestHandler):
 
     def log(self, message):
         print(f"[{self.client_address[0]}] {message}")
+        sys.stdout.flush()
 
 
     def do_GET(self):
@@ -72,6 +80,42 @@ class JailControl(BaseHTTPRequestHandler):
                 return
 
         # Serve frontend static files
+        # Frontend basic auth check
+        if auth_user and auth_pass:
+            header = self.headers.get('Authorization')
+            if not header or not header.startswith('Basic '):
+                self.send_response(401)
+                self.send_header('WWW-Authenticate', 'Basic realm="Jailman UI"')
+                self.send_header('Content-Type', 'text/plain')
+                self.end_headers()
+                if debug:
+                    self.log("No Authorization header or incorrect format")
+                return
+
+            try:
+                encoded = header.split(' ', 1)[1]
+                decoded = base64.b64decode(encoded).decode('utf-8')
+                username, _, password = decoded.partition(':')
+
+                if debug:
+                    self.log(f"Decoded Auth -> Username: {username}, Password: {password}")
+
+                if username != auth_user or password != auth_pass:
+                    if debug:
+                        self.log("Auth failed: credentials don't match")
+                    raise ValueError("Invalid credentials")
+
+            except Exception as e:
+                if debug:
+                    self.log(f"Auth exception: {e}")
+                self.send_response(401)
+                self.send_header('WWW-Authenticate', 'Basic realm="Jailman UI"')
+                self.send_header('Content-Type', 'text/plain')
+                self.end_headers()
+                self.wfile.write(b'Invalid username or password.')
+                return
+
+        # Static file serving
         path = parsed.path.lstrip("/")
         if not path:
             path = "index.html"
@@ -90,7 +134,6 @@ class JailControl(BaseHTTPRequestHandler):
                 self.end_headers()
                 self.wfile.write(f.read())
         except FileNotFoundError:
-            # Only serve index.html for non-file routes (like /dashboard or /status)
             if "." not in path:
                 try:
                     with open("frontend/index.html", "rb") as f:
