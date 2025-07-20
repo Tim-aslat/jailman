@@ -7,4 +7,8 @@ PYTHON=`which python`
 ${PYTHON} -m venv .venv
 . .venv/bin/activate
 
+# install required modules
+pip install -r requirements.txt
+
+# run server
 ./jailman.py

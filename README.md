@@ -1,6 +1,6 @@
 # JAILMAN
 
-JAILMAN - a simple API for bastille jail manager
+JAILMAN - a simple API for bastille jail manager (https://bastillebsd.org)
 
 ## Table of Contents
 
@@ -8,6 +8,7 @@ JAILMAN - a simple API for bastille jail manager
 - [Configuration](#configuration)
 - [Usage](#usage)
 - [Examples](#examples)
+- [Todo](#todo)
 - [Contributing](#contributing)
 - [License](#license)
 
@@ -21,6 +22,10 @@ python3 -m venv venv
 source venv/bin/activate
 pip install -r requirements.txt
 ```
+Alternatively you can just run the start.sh file
+```sh
+./start.sh
+```
 
 ## Configuration
 
@@ -30,10 +35,14 @@ Edit the config.ini file.  It should be self-documenting
 
 ```
 
+## Todo
+- add other actions besides start/stop/restart
+- tidy up template files
+- 
 
 ## Usage
 ```sh
-TODO
+./jailman.py
 ```
 
 ## Examples
