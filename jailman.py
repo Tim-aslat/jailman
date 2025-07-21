@@ -7,6 +7,11 @@ import json
 import configparser
 import sys
 import base64
+import signal
+import os
+import daemon
+import atexit
+
 
 config = configparser.ConfigParser()
 config.read('config.ini')
@@ -310,4 +315,31 @@ def run():
     httpd.serve_forever()
 
 if __name__ == '__main__':
-    run()
+    if debug == False:
+        from daemon import DaemonContext
+        import atexit
+        import os
+        import signal
+
+        # Logging, PID file, and signal handling should already be set up earlier in the file
+
+        def reload_config(signum, frame):
+            logger.info("Received USR1 — reloading config...")
+            config.read('config.ini')
+
+        signal.signal(signal.SIGUSR1, reload_config)
+
+        def cleanup():
+            try:
+                os.remove('/var/run/jailman.pid')
+            except FileNotFoundError:
+                pass
+
+        atexit.register(cleanup)
+
+        with DaemonContext():
+            with open('/var/run/jailman.pid', 'w') as f:
+                f.write(str(os.getpid()))
+            run()
+    else:
+        run()

@@ -29,10 +29,25 @@ th {
   color: white;
   text-transform: uppercase;
   letter-spacing: 0.05em;
+  position: relative;
 }
 
 tr:hover {
   background-color: #a1aaff;
+}
+
+.sort-indicator::after {
+  content: '';
+}
+
+th.sorted-asc .sort-indicator::after {
+  content: ' \25B2';  /* ▲ U+25B2 BLACK UP-POINTING TRIANGLE */
+  color: #0a58ca;
+}
+
+th.sorted-desc .sort-indicator::after {
+  content: ' \25BC';  /* ▼ U+25BC BLACK DOWN-POINTING TRIANGLE */
+  color: #dc3545;
 }
 
 button {
@@ -103,3 +118,4 @@ header {
   cursor: pointer;
   font-size: 1.5em;
 }
+

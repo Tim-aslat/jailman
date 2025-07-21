@@ -171,4 +171,42 @@ async function setPriority(jailName, currentPriority) {
   }
 }
 
+
+document.addEventListener('DOMContentLoaded', () => {
+  const headers = document.querySelectorAll('#jail-table th');
+
+  headers.forEach((header, index) => {
+    const indicator = header.querySelector('.sort-indicator');
+    if (!indicator) return; // Skip unsortable columns
+
+    header.style.cursor = 'pointer';
+
+    header.addEventListener('click', () => {
+      const table = header.closest('table');
+      const rows = Array.from(table.querySelectorAll('tbody tr'));
+      const ascending = header.dataset.sortAsc !== 'true';
+      header.dataset.sortAsc = ascending;
+
+      // Remove sort classes from all headers
+      headers.forEach(h => h.classList.remove('sorted-asc', 'sorted-desc'));
+
+      // Add current sort class
+      header.classList.add(ascending ? 'sorted-asc' : 'sorted-desc');
+
+      // Sort rows based on column index
+      rows.sort((a, b) => {
+        const cellA = a.children[index].innerText.trim();
+        const cellB = b.children[index].innerText.trim();
+        return ascending
+          ? cellA.localeCompare(cellB, undefined, { numeric: true })
+          : cellB.localeCompare(cellA, undefined, { numeric: true });
+      });
+
+      // Re-attach sorted rows
+      rows.forEach(row => table.querySelector('tbody').appendChild(row));
+    });
+  });
+});
+
+
 window.onload = loadJails;
