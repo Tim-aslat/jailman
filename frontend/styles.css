@@ -76,6 +76,11 @@ button:hover {
   color: white;
 }
 
+.btn-green {
+  background-color: #00CC00;
+  color: white;
+}
+
 h2 {
   color: #333;
 }

@@ -64,6 +64,7 @@ async function loadJails() {
       const row = document.createElement("tr");
 
       const bootClass = (jail.Boot.toLowerCase() === 'on') ? 'btn-blue' : 'btn-red';
+      const stateClass = (jail.State.toLowerCase() === 'up') ? 'btn-green' : 'btn-red';
 
       row.innerHTML = `
         <td>${jail.Name}</td>
@@ -73,12 +74,14 @@ async function loadJails() {
         </button>
         </td>
         <td><button title="Set the priority this jail has in boot order.  Lower number = higher priority" onclick="openPriorityModal('${jail.Name}', '${jail.Prio}')">${jail.Prio}</button></td>
-        <td>${jail.State}</td>
+        <td>
+        <button class="${stateClass}" title="Toggle state of this jail" onclick="toggleState('${jail.Name}', '${jail.State}')">
+        ${jail.State}
+        </button>
+        </td>
         <td>${jail["IP Address"]}</td>
         <td>
         <button onclick="restartJail('${jail.Name}')">Restart</button>
-        <button onclick="startJail('${jail.Name}')">Start</button>
-        <button onclick="stopJail('${jail.Name}')">Stop</button>
         </td>
       `;
 
@@ -144,6 +147,26 @@ async function toggleBoot(jail, bootState) {
     await loadJails();  // reload status in case state changes
   } catch (err) {
     output.textContent = `Failed to stop jail: ${err}`;
+  }
+}
+
+async function toggleState(jail, jailState) {
+  const output = document.getElementById("output");
+  output.textContent = `Toggling State on ${jail}...`;
+  let res = '';
+
+  try {
+    let state = (jailState === 'Up') ? 'Down' : 'Up';
+    if ( state === 'Up' ) {
+        res = await fetch(`/api/start?jail=${encodeURIComponent(jail)}`);
+    } else {
+        res = await fetch(`/api/stop?jail=${encodeURIComponent(jail)}`);
+    }
+    const text = await res.text();
+    output.textContent = `Output from ${jail}:\n\n${text}`;
+    await loadJails();  // reload status in case state changes
+  } catch (err) {
+    output.textContent = `Failed to toggle jail: ${err}`;
   }
 }
 
