@@ -4,11 +4,17 @@ JAILMAN - a simple API for bastille jail manager (https://bastillebsd.org)
 
 ## Table of Contents
 
+- [Requirements](#requirements)
 - [Installation](#installation)
 - [Configuration](#configuration)
 - [Usage](#usage)
 - [Todo](#todo)
 - [License](#license)
+
+## Requirements
+
+- Basic Python installation
+- installation of bastille (bastillebsd.org / https://github.com/BastilleBSD/bastille)
 
 ## Installation
 
@@ -30,23 +36,23 @@ Alternatively you can just run the start.sh file
 ```sh
 Edit the config.ini file.  It should be self-documenting
 
-
 ```
 
 ## Todo
-- add other actions besides start/stop/restart
-- tidy up template files
-- 
+- Add other actions besides start/stop/restart
+- Tidy up template files
+- Separate frontend templates to make it more modular (maybe, if there's a reason to)
+- Add RC service option
+- Daemonize process
 
 ## Usage
 For now, the service needs to be run manually, but it is self-contained.
 ```sh
-./jailman.py
+./start.sh
 ```
 
 ## License
 
 BSD 3 clause License
 See `LICENSE` file for full text.
-
 
