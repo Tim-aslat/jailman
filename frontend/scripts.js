@@ -1,5 +1,9 @@
 // let selectedJail = null;
 
+let currentSortIndex = null;
+let currentSortAsc = true;
+let refreshTimer = null;
+
 function logout() {
   fetch("/", {
     headers: {
@@ -90,6 +94,20 @@ async function loadJails() {
   } catch (err) {
     console.error("Failed to load jail list:", err);
     tableBody.innerHTML = '<tr><td colspan="5">Failed to load jail list.</td></tr>';
+  }
+
+  if (currentSortIndex !== null) {
+    const table = document.getElementById("jail-table");
+    const rows = Array.from(table.querySelectorAll("tbody tr"));
+
+    rows.sort((a, b) => {
+      const cellA = a.children[currentSortIndex].innerText.trim();
+      const cellB = b.children[currentSortIndex].innerText.trim();
+      return currentSortAsc
+        ? cellA.localeCompare(cellB, undefined, { numeric: true })
+        : cellB.localeCompare(cellA, undefined, { numeric: true });
+    });
+    rows.forEach(row => table.querySelector("tbody").appendChild(row));
   }
 }
 
@@ -195,6 +213,25 @@ async function setPriority(jailName, currentPriority) {
 }
 
 
+function setupAutoRefresh() {
+  const toggle = document.getElementById('auto-refresh-toggle');
+  const intervalField = document.getElementById('refresh-interval');
+
+  function updateTimer() {
+    clearInterval(refreshTimer);
+
+    if (toggle.checked) {
+      const seconds = parseInt(intervalField.value, 10) || 10;
+      refreshTimer = setInterval(loadJails, seconds * 1000);
+    }
+  }
+
+  toggle.addEventListener('change', updateTimer);
+  intervalField.addEventListener('change', updateTimer);
+
+  updateTimer(); // set up initial timer
+}
+
 document.addEventListener('DOMContentLoaded', () => {
   const headers = document.querySelectorAll('#jail-table th');
 
@@ -209,6 +246,8 @@ document.addEventListener('DOMContentLoaded', () => {
       const rows = Array.from(table.querySelectorAll('tbody tr'));
       const ascending = header.dataset.sortAsc !== 'true';
       header.dataset.sortAsc = ascending;
+      currentSortIndex = index;
+      currentSortAsc = ascending;
 
       // Remove sort classes from all headers
       headers.forEach(h => h.classList.remove('sorted-asc', 'sorted-desc'));
@@ -232,4 +271,7 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 
-window.onload = loadJails;
+window.onload = () => {
+  loadJails();
+  setupAutoRefresh();
+};

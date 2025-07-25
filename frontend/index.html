@@ -13,8 +13,21 @@
     <nav>
     <ul>
         <li><button onclick="logout()">Logout</button></li>
-        <li><button onclick="">Nav 1</button></li>
-        <li><button onclick="">Nav 2</button></li>
+<!--        <li><button onclick="">Nav 1</button></li>
+        <li><button onclick="">Nav 2</button></li> -->
+<li>
+    <div id="refresh-controls">
+      <label>
+        <input type="checkbox" id="auto-refresh-toggle" checked>
+        Auto-refresh
+      </label>
+      &nbsp;
+      <label>
+        Interval (sec):
+        <input type="number" id="refresh-interval" value="10" min="2" style="width: 4em;">
+      </label>
+    </div>
+</li>
     </ul>
     </nav>
 </header>
