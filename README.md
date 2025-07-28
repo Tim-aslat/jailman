@@ -1,6 +1,6 @@
 # JAILMAN
 
-JAILMAN - a simple API for bastille jail manager (https://bastillebsd.org)
+JAILMAN - a simple API for bastille jail manager (https://bastillebsd.org) with example frontend
 
 ## Table of Contents
 
