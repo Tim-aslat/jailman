@@ -2,6 +2,8 @@
 
 JAILMAN - a simple API for bastille jail manager (https://bastillebsd.org) with example frontend
 
+Just a simple frontend to stop/start/restart FreeBSD jails created with Bastille.  I'll probably add more functionality when I have a need for it.
+
 ## Table of Contents
 
 - [Requirements](#requirements)
