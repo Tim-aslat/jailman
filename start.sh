@@ -1,14 +1,25 @@
 #!/bin/sh
 
-# check if python exists
-PYTHON=`which python3.11`
+SESSION_NAME="jailman"
+PYTHON=$(which python3.11)
 
-# create the virtual environment for any additional modules that may be required
+# check if the screen session already exists
+if screen -list | grep -q "[.]${SESSION_NAME}[[:space:]]"; then
+    echo "Screen session '$SESSION_NAME' already running."
+    exit 1
+fi
+
+# create virtual environment
 ${PYTHON} -m venv .venv
 . .venv/bin/activate
 
-# install required modules
+# install requirements
 pip install -r requirements.txt
 
-# run server
-./jailman.py
+# start in a detached screen session
+screen -dmS "$SESSION_NAME" ./jailman.py
+echo "Started '$SESSION_NAME' in detached screen session."
+
+# how to attach later:
+# screen -r jailman
+
